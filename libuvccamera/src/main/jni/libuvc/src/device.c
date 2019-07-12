@@ -46,7 +46,7 @@
 #define LOCAL_DEBUG 0
 
 #define LOG_TAG "libuvc/device"
-#if 1	// デバッグ情報を出さない時1
+#if 0	// デバッグ情報を出さない時1
 	#ifndef LOG_NDEBUG
 		#define	LOG_NDEBUG		// LOGV/LOGD/MARKを出力しない時
 		#endif
@@ -370,7 +370,7 @@ fail2:
 uvc_error_t uvc_get_device_info(uvc_device_t *dev, uvc_device_info_t **info) {
 	uvc_error_t ret;
 	uvc_device_info_t *internal_info;
-
+	int err;
 	UVC_ENTER();
 
 	internal_info = calloc(1, sizeof(*internal_info));
@@ -378,13 +378,14 @@ uvc_error_t uvc_get_device_info(uvc_device_t *dev, uvc_device_info_t **info) {
 		UVC_EXIT(UVC_ERROR_NO_MEM);
 		return UVC_ERROR_NO_MEM;
 	}
-	if (libusb_get_config_descriptor(dev->usb_dev, 0, &(internal_info->config)) != 0) {
+	err = libusb_get_config_descriptor(dev->usb_dev, 0, &(internal_info->config));
+	if (err != 0) {
 //	if (libusb_get_active_config_descriptor(dev->usb_dev, &(internal_info->config)) != 0) {
 		// XXX assume libusb_get_active_config_descriptor　is better
 		// but some buggy device will return error when get active config.
 		// so we will use libusb_get_config_descriptor...
 		free(internal_info);
-		UVC_EXIT(UVC_ERROR_IO);
+		UVC_EXIT(err);
 		return UVC_ERROR_IO;
 	}
 
@@ -953,8 +954,13 @@ uvc_error_t uvc_scan_control(uvc_device_t *dev, uvc_device_info_t *info) {
 	buffer = if_desc->extra;
 	buffer_left = if_desc->extra_length;
 
+	LOGI("before uvc_parse_vc.buffer_left =%d", buffer_left);
 	while (buffer_left >= 3) { // parseX needs to see buf[0,2] = length,type
 		block_size = buffer[0];
+		if (block_size <= 0){
+			LOGW("block_size is %d.this should not happened.",block_size);
+			break;
+		}
 		parse_ret = uvc_parse_vc(dev, info, buffer, block_size);
 
 		if (parse_ret != UVC_SUCCESS) {
@@ -965,6 +971,7 @@ uvc_error_t uvc_scan_control(uvc_device_t *dev, uvc_device_info_t *info) {
 		buffer_left -= block_size;
 		buffer += block_size;
 	}
+	LOGI("after uvc_parse_vc.buffer_left =%d", buffer_left);
 
 	UVC_EXIT(ret);
 	return ret;
@@ -1213,9 +1220,14 @@ uvc_error_t uvc_scan_streaming(uvc_device_t *dev, uvc_device_info_t *info,
 	stream_if->bInterfaceNumber = if_desc->bInterfaceNumber;
 	DL_APPEND(info->stream_ifs, stream_if);
 
+	LOGI("before uvc_parse_vs buffer_left is %d", buffer_left);
 	if (LIKELY(buffer_left >= 3)) {
 		while (buffer_left >= 3) {
 			block_size = buffer[0];
+			if (block_size <= 0){
+				LOGW("block_size is %d.this should not happened.",block_size);
+				break;
+			}
 //			MARK("bDescriptorType=0x%02x", buffer[1]);
 			parse_ret = uvc_parse_vs(dev, info, stream_if, buffer, block_size);
 
@@ -1227,6 +1239,8 @@ uvc_error_t uvc_scan_streaming(uvc_device_t *dev, uvc_device_info_t *info,
 			buffer_left -= block_size;
 			buffer += block_size;
 		}
+
+		LOGI("after uvc_parse_vs buffer_left is %d", buffer_left);
 	} else {
 		LOGW("This VideoStreaming interface has no extra data");
 	}
@@ -1490,7 +1504,7 @@ uvc_error_t uvc_parse_vs(uvc_device_t *dev, uvc_device_info_t *info,
 
 	ret = UVC_SUCCESS;
 	descriptor_subtype = block[2];
-//	MARK("descriptor_subtype=0x%02x", descriptor_subtype);
+	LOGD("descriptor_subtype=0x%02x, block_size:%d", descriptor_subtype, block_size);
 	switch (descriptor_subtype) {
 	case UVC_VS_INPUT_HEADER:
 		ret = uvc_parse_vs_input_header(stream_if, block, block_size);

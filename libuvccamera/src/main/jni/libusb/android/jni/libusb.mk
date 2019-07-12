@@ -54,7 +54,8 @@ LOCAL_EXPORT_C_INCLUDES := \
 # add some flags
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)
 LOCAL_CFLAGS += -DANDROID_NDK
-LOCAL_CFLAGS += -DLOG_NDEBUG
+# LOCAL_CFLAGS += -DLOG_NDEBUG
+LOCAL_CFLAGS += -DPRINT_DIAG
 LOCAL_CFLAGS += -DACCESS_RAW_DESCRIPTORS
 LOCAL_CFLAGS += -O3 -fstrict-aliasing -fprefetch-loop-arrays
 LOCAL_EXPORT_LDLIBS += -llog
@@ -74,3 +75,21 @@ LOCAL_WHOLE_STATIC_LIBRARIES = libusb100_static
 
 LOCAL_MODULE := libusb100
 include $(BUILD_SHARED_LIBRARY)
+
+
+
+# boot
+######################################################################
+include $(CLEAR_VARS)
+
+LOCAL_CFLAGS += -fPIE
+LOCAL_LDFLAGS += -fPIE -pie
+
+LOCAL_MODULE_TAGS := optional
+LOCAL_EXPORT_LDLIBS += -llog
+LOCAL_SRC_FILES := \
+	libusb/../examples/usb_boot.c 
+	
+LOCAL_WHOLE_STATIC_LIBRARIES := libusb100_static
+LOCAL_MODULE := boot
+include $(BUILD_EXECUTABLE)

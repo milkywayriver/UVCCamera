@@ -33,6 +33,10 @@
 #include <poll.h>
 #endif
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 #ifdef HAVE_MISSING_H
 #include "missing.h"
 #endif
@@ -164,8 +168,13 @@ void usbi_log_v(struct libusb_context *ctx, enum libusb_log_level level,
 #if !defined(_MSC_VER) || _MSC_VER >= 1400
 
 #ifdef ENABLE_LOGGING
-#define _usbi_log(ctx, level, ...) usbi_log(ctx, level, __FUNCTION__, __VA_ARGS__)
-#define usbi_dbg(...) _usbi_log(NULL, LIBUSB_LOG_LEVEL_DEBUG, __VA_ARGS__)
+	#ifdef __ANDROID__
+		#define _usbi_log(ctx, level, ...) __android_log_print(ANDROID_LOG_FATAL - level, __FUNCTION__, __VA_ARGS__)		
+		#define usbi_dbg(...) //_usbi_log(NULL, LIBUSB_LOG_LEVEL_DEBUG, __VA_ARGS__)
+	#else
+		#define _usbi_log(ctx, level, ...) usbi_log(ctx, level, __FUNCTION__, __VA_ARGS__)
+		#define usbi_dbg(...) _usbi_log(NULL, LIBUSB_LOG_LEVEL_DEBUG, __VA_ARGS__)
+	#endif
 #else
 #define _usbi_log(ctx, level, ...) do { (void)(ctx); } while(0)
 #define usbi_dbg(...) do {} while(0)

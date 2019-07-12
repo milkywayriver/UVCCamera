@@ -15,7 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
-
+APP_PLATFORM := android-16
 APP_ABI := all
 
 # Workaround for MIPS toolchain linker being unable to find liblog dependency

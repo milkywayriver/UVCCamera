@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/libusb
 LDADD = ../libusb/libusb-1.0.la
 
-noinst_PROGRAMS = listdevs xusb fxload hotplugtest
+noinst_PROGRAMS = listdevs xusb fxload hotplugtest usb_boot
 
 if HAVE_SIGACTION
 noinst_PROGRAMS += dpfp

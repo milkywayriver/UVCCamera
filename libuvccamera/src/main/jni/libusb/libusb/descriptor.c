@@ -174,7 +174,7 @@ static int parse_endpoint(struct libusb_context *ctx,
 		if (is_known_descriptor_type(header.bDescriptorType))
 			break;
 
-		usbi_dbg("skipping descriptor 0x%02x", header.bDescriptorType);
+		usbi_info(ctx, "skipping descriptor 0x%02x", header.bDescriptorType);
 		buffer += header.bLength;
 		size -= header.bLength;
 		parsed += header.bLength;
